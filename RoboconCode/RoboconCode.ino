@@ -9,17 +9,16 @@ int error = 0;
 byte type = 0;
 byte vibrate = 0;
 byte mreply[1000];
-int liftDir = 127;
+int liftDir = 0;
 int stateDir = 0;
 
 // motor catch
-int mode = 1;
-int rollDir = 128;
+int rollDir = 0;
 int right_state = 0;
 int left_state = 0;
 
-#define GO_UP -1000;
-#define GO_DOWN 1000;
+#define GO_UP -5000;
+#define GO_DOWN 5000;
 
 #define GO_RIGHT_LEFT 400;
 #define GO_LEFT_RIGHT -400;
@@ -64,20 +63,24 @@ void loop() {
     if (ps2x.Button(PSB_SELECT))
       Serial.println("Select is being held");
     if (ps2x.Button(PSB_PAD_UP)) {        //will be TRUE as long as button is pressed
-      Serial.print("Up held this hard: ");
-      Serial.println(ps2x.Analog(PSAB_PAD_UP), DEC);
+    //  Serial.print("Up held this hard: ");
+    //  Serial.println(ps2x.Analog(PSAB_PAD_UP), DEC);
+      liftDir = ps2x.Analog(PSAB_PAD_UP);
     }
     if (ps2x.Button(PSB_PAD_RIGHT)) {
       Serial.print("Right held this hard: ");
       Serial.println(ps2x.Analog(PSAB_PAD_RIGHT), DEC);
+      rollDir = ps2x.Analog(PSAB_PAD_RIGHT);
     }
     if (ps2x.Button(PSB_PAD_LEFT)) {
       Serial.print("LEFT held this hard: ");
       Serial.println(ps2x.Analog(PSAB_PAD_LEFT), DEC);
+      rollDir = map(ps2x.Analog(PSAB_PAD_RIGHT), 0, 255, -255, 0);
     }
     if (ps2x.Button(PSB_PAD_DOWN)) {
-      Serial.print("DOWN held this hard: ");
-      Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
+    //  Serial.print("DOWN held this hard: ");
+    //  Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
+      liftDir = map(ps2x.Analog(PSAB_PAD_UP),0, 255, -255, 0);
     }
     vibrate = ps2x.Analog(PSAB_BLUE);
     if (ps2x.NewButtonState())
@@ -107,49 +110,53 @@ void loop() {
       Serial.print("Stick Values:");
       Serial.print(ps2x.Analog(PSS_LY), DEC); //Left stick, Y axis. Other options: LX, RY, RX
       Serial.print(",");
-      liftDir = ps2x.Analog(PSS_LY);
+      
       Serial.print(ps2x.Analog(PSS_LX), DEC);
       Serial.print(",");
       Serial.print(ps2x.Analog(PSS_RY), DEC);
       Serial.print(",");
       Serial.println(ps2x.Analog(PSS_RX), DEC);
-      rollDir = ps2x.Analog(PSS_RX);
+     // rollDir = ps2x.Analog(PSS_RX);
     }
   }
   //   Serial.println(liftDir);
-  if (rollDir == 128 || rollDir == 129 || rollDir == 127) {
+  if (rollDir == 0) {
     left_state = 0;
     right_state = 0;
-  } else if (rollDir < 126) {
+  } else if (rollDir > 0) {
     left_state = GO_LEFT_RIGHT;
     right_state = GO_RIGHT_LEFT;
-  } else if (rollDir > 129) {
+  } else if (rollDir < 0) {
     left_state = GO_RIGHT_LEFT;
     right_state = GO_LEFT_RIGHT;
   }
-  if (liftDir == 127 || liftDir == 126 || liftDir == 128) {
+
+  Serial.print("Lift : ");
+  if (liftDir == 0) {
     stateDir = 0;
-  } else if (liftDir > 128) {
-    stateDir = GO_DOWN;
-  } else if (liftDir < 126) {
+    Serial.println("no move!");
+  } else if (liftDir > 0) {
+    Serial.println("GO_UP");
     stateDir = GO_UP;
+  } else if (liftDir < 0) {
+    Serial.println("GO_DOWN");
+    stateDir = GO_DOWN;
   }
   
   run_speed(1, stateDir);
   run_speed(2, right_state);
   run_speed(3, left_state);
   
-  rollDir = 128;
+ // rollDir = 128;
 
-  liftDir = 127;// reset to the orginal state
-  stateDir = 0;
+
 
   Serial.print(left_state);
   Serial.print(",");
   Serial.println(right_state);
-  Serial.print("mode: ");
-  Serial.println(mode);
-  rollDir = 128;
+  liftDir = 0;// reset to the orginal state
+  stateDir = 0;
+  rollDir = 0;
   left_state = 0;
   right_state = 0;
   delay(40);

@@ -23,9 +23,62 @@ int left_state = 0;
 #define GO_RIGHT_LEFT 400;
 #define GO_LEFT_RIGHT -400;
 
+// Motor back_right
+#define ENCA_back_right 2
+#define ENCB_back_right 3
+#define PWM_back_right 5
+#define IN2_back_right 6
+#define IN1_back_right 7
+
+//Motor front_right
+#define ENCA_front_right 14
+#define ENCB_front_right 15
+#define PWM_front_right 8
+#define IN2_front_right 17
+#define IN1_front_right 16
+
+//Motor back_left
+#define ENCA_back_left 20
+#define ENCB_back_left 21
+#define PWM_back_left  9
+#define IN2_back_left 23
+#define IN1_back_left 22
+
+//Motor front_left
+#define ENCA_front_left 24
+#define ENCB_front_left 25
+#define PWM_front_left 4
+#define IN2_front_left 27
+#define IN1_front_left 26 
+
+//Define direction state of running motor
+#define GO_FORWARD 1
+#define GO_BACKWARD -1
+#define STOP_GO 0
+
+//initialize direct first state of running motor
+int dir_front_right = 0;
+int dir_back_right = 0;
+int dir_front_left = 0;
+int dir_back_left = 0;
+
+//initialize first speed state of running motor
+int speed_back_left = 0;
+int speed_front_left = 0;
+int speed_back_right = 0;
+int speed_front_right = 0;
+
+//define the state of joystick
+int js_left_x = 128;
+int js_left_y = 127;
+int js_right_x = 128;
+int js_right_y = 127;
+
 void setup() {
   rs485.begin(115200);
   Serial.begin(9600);
+
+  //Code for PS2 error to determind type of controller
   error = ps2x.config_gamepad(13, 11, 10, 12, true, true);
   if (error == 0) {
     Serial.println("Found Controller, configured successful");
@@ -51,6 +104,34 @@ void setup() {
       Serial.println("GuitarHero Controller Found");
       break;
   }
+
+  //Motor back_right
+  pinMode(ENCA_back_right,INPUT);
+  pinMode(ENCB_back_right,INPUT);
+  pinMode(IN2_back_right, OUTPUT);
+  pinMode(IN1_back_right, OUTPUT);
+  pinMode(PWM_back_right, OUTPUT);
+
+  //Motor front_right
+  pinMode(ENCA_front_right,INPUT);
+  pinMode(ENCB_front_right,INPUT);
+  pinMode(IN2_front_right, OUTPUT);
+  pinMode(IN1_front_right, OUTPUT);
+  pinMode(PWM_front_right, OUTPUT);
+
+  //Motor back_left
+  pinMode(ENCA_back_left,INPUT);
+  pinMode(ENCB_back_left,INPUT);
+  pinMode(IN2_back_left, OUTPUT);
+  pinMode(IN1_back_left, OUTPUT);
+  pinMode(PWM_back_left, OUTPUT);
+
+  //Motor front_left
+  pinMode(ENCA_front_left,INPUT);
+  pinMode(ENCB_front_left,INPUT);
+  pinMode(IN2_front_left, OUTPUT);
+  pinMode(IN1_front_left, OUTPUT);
+  pinMode(PWM_front_left, OUTPUT);
 }
 
 void loop() {
@@ -103,23 +184,30 @@ void loop() {
       Serial.println("Circle just pressed");
     if (ps2x.ButtonReleased(PSB_PINK))            //will be TRUE if button was JUST released
       Serial.println("Square just released");
-    if (ps2x.NewButtonState(PSB_BLUE))           //will be TRUE if button was JUST pressed OR released
+    if (ps2x.NewButtonState(PSB_BLUE)){           //will be TRUE if button was JUST pressed OR released
       Serial.println("X just changed");
-    if (ps2x.Button(PSB_L1)||ps2x.Button(PSB_R1)) // print stick values if either is TRUE
-    {
-      Serial.print("Stick Values:");
-      Serial.print(ps2x.Analog(PSS_LY), DEC); //Left stick, Y axis. Other options: LX, RY, RX
-      Serial.print(",");
-      
-      Serial.print(ps2x.Analog(PSS_LX), DEC);
-      Serial.print(",");
-      Serial.print(ps2x.Analog(PSS_RY), DEC);
-      Serial.print(",");
-      Serial.println(ps2x.Analog(PSS_RX), DEC);
-     // rollDir = ps2x.Analog(PSS_RX);
     }
+
+    //for running motor input read
+    Serial.print("Stick Values:");
+    Serial.print(ps2x.Analog(PSS_LY), DEC); //Left stick, Y axis. Other options: LX, RY, RX
+    Serial.print(",");
+    Serial.print(ps2x.Analog(PSS_LX), DEC);
+    Serial.print(",");
+    Serial.print(ps2x.Analog(PSS_RY), DEC);
+    Serial.print(",");
+    Serial.println(ps2x.Analog(PSS_RX), DEC);
+     // rollDir = ps2x.Analog(PSS_RX);
+    js_left_x = ps2x.Analog(PSS_LX);
+    js_left_y = ps2x.Analog(PSS_LY);
+    js_right_x = ps2x.Analog(PSS_RX);
+    js_right_y = ps2x.Analog(PSS_RY);
+     
+
+     
   }
-  //   Serial.println(liftDir);
+  
+  //For streching motor
   if (rollDir == 0) {
     left_state = 0;
     right_state = 0;
@@ -131,34 +219,142 @@ void loop() {
     right_state = GO_LEFT_RIGHT;
   }
 
-  Serial.print("Lift : ");
+
+  //for lifting motor
   if (liftDir == 0) {
     stateDir = 0;
-    Serial.println("no move!");
   } else if (liftDir > 0) {
-    Serial.println("GO_UP");
     stateDir = GO_UP;
   } else if (liftDir < 0) {
-    Serial.println("GO_DOWN");
     stateDir = GO_DOWN;
   }
+
+
+  //lefting motor
+  //  run_speed(1, stateDir);
+  //  run_speed(2, right_state);
+  //  run_speed(3, left_state);
+
+  //Giving direction codition to motor
+  //GIve to Y axis of Left and right JOYStick
+  if(js_left_y <127){
+    dir_back_left = GO_FORWARD;
+    dir_front_left = GO_FORWARD;
+    speed_back_left = 100;
+    speed_front_left = 100;
+  }
+
+  if(js_right_y < 127){
+    dir_back_right = GO_FORWARD;
+    dir_front_right = GO_FORWARD;
+    speed_back_right = 100;
+    speed_front_right = 100;
+  }
+  if(js_left_y > 127){
+    dir_back_left = GO_BACKWARD;
+    dir_front_left = GO_BACKWARD;
+    speed_back_left = 100;
+    speed_front_left = 100;
+  }
+  if(js_right_y > 127){
+    dir_back_right = GO_BACKWARD;
+    dir_front_right = GO_BACKWARD;
+    speed_back_right = 100;
+    speed_front_right = 100;
+  }
+  //Give condition to X axis of Left and Right joyStick
   
-  run_speed(1, stateDir);
-  run_speed(2, right_state);
-  run_speed(3, left_state);
+  if(js_left_x <128){
+    dir_back_left = GO_FORWARD;
+    dir_front_left = GO_BACKWARD;
+    speed_back_left = 100;
+    speed_front_left = 100;
+  }
+
+  if(js_right_x < 128){
+    dir_back_right = GO_BACKWARD;
+    dir_front_right = GO_FORWARD;
+    speed_back_right = 100;
+    speed_front_right = 100;
+  }
+  if(js_left_x > 128){
+    dir_back_left = GO_BACKWARD;
+    dir_front_left = GO_FORWARD;
+    speed_back_left = 100;
+    speed_front_left = 100;
+  }
+  if(js_right_x > 128){
+    dir_back_right = GO_FORWARD;
+    dir_front_right = GO_BACKWARD;
+    speed_back_right = 100;
+    speed_front_right = 100;
+  }
+
+  if(js_left_x == 128 && js_left_y == 127){
+    speed_back_left = 0;
+    speed_front_left = 0;
+    dir_back_left = 0;
+    dir_front_right = 0;
+  }
+  if(js_right_x == 128 && js_right_y == 127){
+    speed_back_right = 0;
+    speed_front_right = 0;
+    dir_back_right = 0;
+    dir_front_right = 0;
+  }
+  Serial.print(speed_front_left);
+  Serial.print(" ");
+  Serial.print(dir_front_left);
+  Serial.print(" ");
+  Serial.print(speed_back_left);
+  Serial.print(" ");
+  Serial.println(dir_back_left);
+  //Execute running
+  setMotor(dir_back_right, speed_back_right, PWM_back_right, IN1_back_right, IN2_back_right);
+  setMotor(dir_front_right, speed_front_right, PWM_front_right, IN1_front_right, IN2_front_right);
+  setMotor(dir_back_left, speed_back_left, PWM_back_left, IN1_back_left, IN2_back_left);
+  setMotor(dir_front_left, speed_front_left, PWM_front_left, IN1_front_left, IN2_front_left);
+
+  //reset direction of motor
+  dir_back_right = 0;
+  dir_front_right = 0;
+  dir_back_left = 0;
+  dir_front_left = 0;
+
   
- // rollDir = 128;
+  //reset speed motor
+  speed_back_right = 0;
+  speed_front_right = 0;
+  speed_back_left = 0;
+  speed_front_left = 0;
+
+  //reset js(Joystick) state
+  js_left_x = 128;
+  js_left_y = 127;
+  js_right_x = 128;
+  js_right_y = 127;
 
 
-
-  Serial.print(left_state);
-  Serial.print(",");
-  Serial.println(right_state);
+  //resetPart
   liftDir = 0;// reset to the orginal state
   stateDir = 0;
   rollDir = 0;
   left_state = 0;
   right_state = 0;
   delay(40);
- 
+}
+void setMotor(int dir, int pwmVal, int pwm, int in1, int in2){
+  analogWrite(pwm,pwmVal);
+  if(dir == 1){
+    digitalWrite(in1,LOW);
+    digitalWrite(in2,HIGH);
+  }
+  else if(dir == -1){
+    digitalWrite(in1,HIGH);
+    digitalWrite(in2,LOW);
+  }
+  else{
+    digitalWrite(in1,LOW);
+    digitalWrite(in2,LOW);
+  }
 }

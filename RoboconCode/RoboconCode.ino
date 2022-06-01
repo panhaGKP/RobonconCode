@@ -11,14 +11,15 @@ byte vibrate = 0;
 byte mreply[1000];
 int liftDir = 0;
 int stateDir = 0;
+int mode = 1;
 
 // motor catch
 int rollDir = 0;
 int right_state = 0;
 int left_state = 0;
 
-#define GO_UP -5000;
-#define GO_DOWN 5000;
+#define GO_UP -1000;
+#define GO_DOWN 500;
 
 #define GO_RIGHT_LEFT 400;
 #define GO_LEFT_RIGHT -400;
@@ -55,6 +56,13 @@ int left_state = 0;
 #define GO_FORWARD 1
 #define GO_BACKWARD -1
 #define STOP_GO 0
+#define DEFAULT_SPEED 120
+#define FASTER 135
+#define SLOWER -60
+
+//initialize velocoty
+int velo = 0;
+int additional_speed = 0;
 
 //initialize direct first state of running motor
 int dir_front_right = 0;
@@ -132,6 +140,13 @@ void setup() {
   pinMode(IN2_front_left, OUTPUT);
   pinMode(IN1_front_left, OUTPUT);
   pinMode(PWM_front_left, OUTPUT);
+
+  setMotor(0, 0, PWM_back_right, IN1_back_right, IN2_back_right);
+  setMotor(0, 0, PWM_front_right, IN1_front_right, IN2_front_right);
+  setMotor(0, 0, PWM_back_left, IN1_back_left, IN2_back_left);
+  setMotor(0, 0, PWM_front_left, IN1_front_left, IN2_front_left);
+
+  //run_speed(1, 0);
 }
 
 void loop() {
@@ -172,7 +187,6 @@ void loop() {
         Serial.println("R3 pressed");
       if (ps2x.Button(PSB_L2)) {
         Serial.println("L2 pressed");
-      //  mode++;
       }
       if (ps2x.Button(PSB_R2))
       
@@ -202,12 +216,16 @@ void loop() {
     js_left_y = ps2x.Analog(PSS_LY);
     js_right_x = ps2x.Analog(PSS_RX);
     js_right_y = ps2x.Analog(PSS_RY);
-     
-
-     
+    //
+    if(ps2x.Button(PSB_L1)){
+      additional_speed = SLOWER;
+    }
+    if(ps2x.Button(PSB_R1)){
+      additional_speed = FASTER;
+    }
   }
+  /*=================For streching motor======================*/
   
-  //For streching motor
   if (rollDir == 0) {
     left_state = 0;
     right_state = 0;
@@ -220,7 +238,7 @@ void loop() {
   }
 
 
-  //for lifting motor
+  /*=================For lift motor======================*/
   if (liftDir == 0) {
     stateDir = 0;
   } else if (liftDir > 0) {
@@ -228,92 +246,106 @@ void loop() {
   } else if (liftDir < 0) {
     stateDir = GO_DOWN;
   }
-
+  
+ // run_speed(1, stateDir);
 
   //lefting motor
-  //  run_speed(1, stateDir);
+    
   //  run_speed(2, right_state);
   //  run_speed(3, left_state);
 
   //Giving direction codition to motor
   //GIve to Y axis of Left and right JOYStick
-  if(js_left_y <127){
+  
+//  if(js_left_y <127)
+
+  /*=================calculate the speed======================*/
+  velo = DEFAULT_SPEED + additional_speed;
+
+
+  
+  /*=================For running motor======================*/
+  if(js_left_y == 0)
+  {
     dir_back_left = GO_FORWARD;
     dir_front_left = GO_FORWARD;
-    speed_back_left = 100;
-    speed_front_left = 100;
+    speed_back_left = velo;
+    speed_front_left = velo;
   }
 
-  if(js_right_y < 127){
+//  if(js_right_y < 127)
+  if(js_right_y == 0)
+  {
     dir_back_right = GO_FORWARD;
     dir_front_right = GO_FORWARD;
-    speed_back_right = 100;
-    speed_front_right = 100;
+    speed_back_right = velo;
+    speed_front_right = velo;
   }
-  if(js_left_y > 127){
+//  if(js_left_y > 127)
+  if(js_left_y == 255)
+  {
     dir_back_left = GO_BACKWARD;
     dir_front_left = GO_BACKWARD;
-    speed_back_left = 100;
-    speed_front_left = 100;
+    speed_back_left = velo;
+    speed_front_left = velo;
   }
-  if(js_right_y > 127){
+//  if(js_right_y > 127)
+  if(js_right_y == 255)
+  {
     dir_back_right = GO_BACKWARD;
     dir_front_right = GO_BACKWARD;
-    speed_back_right = 100;
-    speed_front_right = 100;
+    speed_back_right = velo;
+    speed_front_right = velo;
   }
   //Give condition to X axis of Left and Right joyStick
   
-  if(js_left_x <128){
+ // if(js_left_x <128)
+  if(js_left_x == 0)
+  {
     dir_back_left = GO_FORWARD;
     dir_front_left = GO_BACKWARD;
-    speed_back_left = 100;
-    speed_front_left = 100;
+    speed_back_left = velo;
+    speed_front_left = velo;
   }
 
-  if(js_right_x < 128){
+//  if(js_right_x < 128)
+  if(js_right_x == 0)
+  {
     dir_back_right = GO_BACKWARD;
     dir_front_right = GO_FORWARD;
-    speed_back_right = 100;
-    speed_front_right = 100;
+    speed_back_right = velo;
+    speed_front_right = velo;
   }
-  if(js_left_x > 128){
+//  if(js_left_x > 128)
+  if(js_left_x ==255)
+  {
     dir_back_left = GO_BACKWARD;
     dir_front_left = GO_FORWARD;
-    speed_back_left = 100;
-    speed_front_left = 100;
+    speed_back_left = velo;
+    speed_front_left = velo;
   }
-  if(js_right_x > 128){
+//  if(js_right_x > 128)
+  if(js_right_x == 255)
+  {
     dir_back_right = GO_FORWARD;
     dir_front_right = GO_BACKWARD;
-    speed_back_right = 100;
-    speed_front_right = 100;
+    speed_back_right = velo;
+    speed_front_right = velo;
   }
+  /*=================Diagonal direction======================*
+  /*=================Execute run motor======================*/
+    setMotor(dir_back_right, speed_back_right, PWM_back_right, IN1_back_right, IN2_back_right);
+    setMotor(dir_front_right, speed_front_right, PWM_front_right, IN1_front_right, IN2_front_right);
+    setMotor(dir_back_left, speed_back_left, PWM_back_left, IN1_back_left, IN2_back_left);
+    setMotor(dir_front_left, speed_front_left, PWM_front_left, IN1_front_left, IN2_front_left);
 
-  if(js_left_x == 128 && js_left_y == 127){
-    speed_back_left = 0;
-    speed_front_left = 0;
-    dir_back_left = 0;
-    dir_front_right = 0;
-  }
-  if(js_right_x == 128 && js_right_y == 127){
-    speed_back_right = 0;
-    speed_front_right = 0;
-    dir_back_right = 0;
-    dir_front_right = 0;
-  }
-  Serial.print(speed_front_left);
-  Serial.print(" ");
-  Serial.print(dir_front_left);
-  Serial.print(" ");
-  Serial.print(speed_back_left);
-  Serial.print(" ");
-  Serial.println(dir_back_left);
-  //Execute running
-  setMotor(dir_back_right, speed_back_right, PWM_back_right, IN1_back_right, IN2_back_right);
-  setMotor(dir_front_right, speed_front_right, PWM_front_right, IN1_front_right, IN2_front_right);
-  setMotor(dir_back_left, speed_back_left, PWM_back_left, IN1_back_left, IN2_back_left);
-  setMotor(dir_front_left, speed_front_left, PWM_front_left, IN1_front_left, IN2_front_left);
+
+    
+  /*=================Reset everthing part======================*/
+
+  //resut the velo and additional speed
+  additional_speed = 0;
+  velo = 0;
 
   //reset direction of motor
   dir_back_right = 0;

@@ -53,34 +53,35 @@ int mappedValueL2CCWCW(int value){
 }
 
 int mappedValueR31InOut(int value){
-  int mappedValue = map(value, MIN, MAX, 285, 350);
-  return mappedValue;
-}
-
-int mappedValueM31InOut(int value){
-  int mappedValue = map(value, MIN, MAX, 350, 285);
-  return mappedValue;
-}
-
-int mappedValueL31InOut(int value){
-  int mappedValue = map(value, MIN, MAX, 350, 270);
+  int mappedValue = map(value, MIN, MAX, 340, 370);
   return mappedValue;
 }
 
 int mappedValueR32InOut(int value){
-  int mappedValue = map(value, MIN, MAX, 350, 290);
+  int mappedValue = map(value, MIN, MAX, 290, 270);
+  return mappedValue;
+}
+
+int mappedValueM31InOut(int value){
+  int mappedValue = map(value, MIN, MAX, 290, 270);
   return mappedValue;
 }
 
 int mappedValueM32InOut(int value){
-  int mappedValue = map(value, MIN, MAX, 285, 360);
+  int mappedValue = map(value, MIN, MAX, 340, 370);
+  return mappedValue;
+}
+
+int mappedValueL31InOut(int value){
+  int mappedValue = map(value, MIN, MAX, 300, 270);
   return mappedValue;
 }
 
 int mappedValueL32InOut(int value){
-  int mappedValue = map(value, MIN, MAX, 150, 220);
+  int mappedValue = map(value, MIN, MAX, 190, 220);
   return mappedValue;
 }
+
 
 void initialPosition(){
   pwm.begin();

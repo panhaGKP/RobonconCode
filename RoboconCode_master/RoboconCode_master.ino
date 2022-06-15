@@ -48,9 +48,9 @@ byte vibrate = 0;
 #define GO_FORWARD 1
 #define GO_BACKWARD -1
 #define STOP_GO 0
-#define DEFAULT_SPEED 100
-#define FASTER 50
-#define SLOWER -40
+#define DEFAULT_SPEED 140
+#define FASTER 110
+#define SLOWER -60
 
 #define R_IS_lift 40
 #define L_IS_lift 41
@@ -58,7 +58,8 @@ byte vibrate = 0;
 #define L_EN_lift 43
 #define R_PWM_lift 45
 #define L_PWM_lift 44
-#define lift_speed_default 100
+#define lift_speed_default 200
+#define lift_speed_default_slow 100
 
 //initialize velocoty
 int velo = 0;
@@ -143,7 +144,10 @@ void setup() {
   Serial.begin(9600);
 
   //Code for PS2 error to determind type of controller
-  error = ps2x.config_gamepad(13, 11, 10, 12, true, true);//GamePad(clock, command, attention, data, Pressures?, Rumble?) 
+  do {
+    delay(1000);
+    error = ps2x.config_gamepad(13, 11, 10, 12, true, true);//GamePad(clock, command, attention, data, Pressures?, Rumble?)
+  }while(error ==1);
   if (error == 0) {
     Serial.println("Found Controller, configured successful");
     Serial.println("Try out all the buttons, X will vibrate the controller, faster as you press harder;");
@@ -169,7 +173,7 @@ void setup() {
       break;
   }
 
- //run motor right front side
+  //run motor right front side
   pinMode(R_IS_RIGHT_FRONT, OUTPUT);
   pinMode(R_EN_RIGHT_FRONT, OUTPUT);
   pinMode(L_IS_RIGHT_FRONT, OUTPUT);
@@ -218,7 +222,7 @@ void setup() {
   digitalWrite(L_IS_lift, LOW);
   digitalWrite(R_EN_lift, HIGH);
   digitalWrite(L_EN_lift, HIGH);
-  
+
   // for catching Squeeze motor lagori
   pinMode(IN1_LIFT_LAGO, OUTPUT); // no for PWM , direct 5V
   pinMode(IN2_LIFT_LAGO, OUTPUT);
@@ -227,10 +231,10 @@ void setup() {
   pinMode(IN1_SQUEEZE_LAGO, OUTPUT);
   pinMode(IN2_SQUEEZE_LAGO, OUTPUT);
   //run_speed(1, 0);
-  
+
   //initilize servo
   initialPosition();
-  
+
 }
 
 void loop() {
@@ -243,7 +247,7 @@ void loop() {
     if (ps2x.Button(PSB_SELECT))
       Serial.println("Select is being held");
     if (ps2x.Button(PSB_PAD_UP)) {        //will be TRUE as long as button is pressed
-        liftDir = ps2x.Analog(PSAB_PAD_UP);
+      liftDir = ps2x.Analog(PSAB_PAD_UP);
     }
     if (ps2x.Button(PSB_PAD_RIGHT)) {
       Serial.print("Right held this hard: ");
@@ -256,11 +260,11 @@ void loop() {
       rollDir = map(ps2x.Analog(PSAB_PAD_RIGHT), 0, 255, -255, 0);
     }
     if (ps2x.Button(PSB_PAD_DOWN)) {
-    //  Serial.print("DOWN held this hard: ");
-    //  Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
-        liftDir = map(ps2x.Analog(PSAB_PAD_UP),0, 255, -255, 0);
+      //  Serial.print("DOWN held this hard: ");
+      //  Serial.println(ps2x.Analog(PSAB_PAD_DOWN), DEC);
+      liftDir = map(ps2x.Analog(PSAB_PAD_UP), 0, 255, -255, 0);
     }
-  //  vibrate = ps2x.Analog(PSAB_BLUE);
+    //  vibrate = ps2x.Analog(PSAB_BLUE);
     vibrate = 0;
     if (ps2x.NewButtonState())
     {
@@ -270,18 +274,18 @@ void loop() {
         Serial.println("R3 pressed");
       if (ps2x.Button(PSB_L2)) {
         Serial.println("L2 pressed");
-        if(squeeze_state != SQUEEZE_UP){
+        if (squeeze_state != SQUEEZE_UP) {
           Serial.println("Squeeze ball up");
-          for(int i=180; i>=0; i--){
+          for (int i = 180; i >= 0; i--) {
             control_R1(i);
             control_M1(i);
             control_L1(i);
             delay(1);
           }
           squeeze_state = SQUEEZE_UP;
-        }else{
+        } else {
           Serial.println("Squeeze ball down");
-          for(int i=0; i<=180; i++){
+          for (int i = 0; i <= 180; i++) {
             control_R1(i);
             control_M1(i);
             control_L1(i);
@@ -290,12 +294,12 @@ void loop() {
           squeeze_state = SQUEEZE_DOWN;
         }
       }
-      if (ps2x.Button(PSB_R2)){
+      if (ps2x.Button(PSB_R2)) {
         Serial.println("R2 pressed");
-        if(catchState != SQUEEZE_BALL){
+        if (catchState != SQUEEZE_BALL) {
 
           Serial.println("Squeeze ball");
-          for(int i=0; i<=180; i++){
+          for (int i = 0; i <= 180; i++) {
             control_R31(i);
             control_R32(i);
             control_M31(i);
@@ -305,9 +309,9 @@ void loop() {
             delay(1);
           }
           catchState = SQUEEZE_BALL;
-        }else{
+        } else {
           Serial.println("Roll ball");
-          for(int i=180; i>=0; i--){
+          for (int i = 180; i >= 0; i--) {
             control_R31(i);
             control_R32(i);
             control_M31(i);
@@ -322,33 +326,33 @@ void loop() {
       if (ps2x.Button(PSB_GREEN))
         Serial.println("Triangle pressed");
     }
-    if (ps2x.ButtonPressed(PSB_RED)){            //will be TRUE if button was JUST pressed
-            //Define rotate squeeze ball
-//      #define SQUEEZE_ROTATE_T 1
-//      #define SQUEEZE_ROTATE_F 0
-//      
-//      //initialize alternate rotate squeeze state
-//      int squeeze_rotate_state = SQUEEZE_ROTATE_T;
-        Serial.println("Circle just pressed");
-        if(squeeze_rotate_state != SQUEEZE_ROTATE_T){
-          for(int i=0; i<=90; i++){
-            control_R2(i);
-            control_M2(i);
-            control_L2(i);
-          }
-          squeeze_rotate_state = SQUEEZE_ROTATE_T;
-        }else{
-          for(int i=90; i>=0; i--){
-            control_R2(i);
-            control_M2(i);
-            control_L2(i);
-          }
-          squeeze_rotate_state = SQUEEZE_ROTATE_F;
+    if (ps2x.ButtonPressed(PSB_RED)) {           //will be TRUE if button was JUST pressed
+      //Define rotate squeeze ball
+      //      #define SQUEEZE_ROTATE_T 1
+      //      #define SQUEEZE_ROTATE_F 0
+      //
+      //      //initialize alternate rotate squeeze state
+      //      int squeeze_rotate_state = SQUEEZE_ROTATE_T;
+      Serial.println("Circle just pressed");
+      if (squeeze_rotate_state != SQUEEZE_ROTATE_T) {
+        for (int i = 0; i <= 90; i++) {
+          control_R2(i);
+          control_M2(i);
+          control_L2(i);
         }
+        squeeze_rotate_state = SQUEEZE_ROTATE_T;
+      } else {
+        for (int i = 90; i >= 0; i--) {
+          control_R2(i);
+          control_M2(i);
+          control_L2(i);
+        }
+        squeeze_rotate_state = SQUEEZE_ROTATE_F;
+      }
     }
     if (ps2x.ButtonReleased(PSB_PINK))            //will be TRUE if button was JUST released
       Serial.println("Square just released");
-    if (ps2x.NewButtonState(PSB_BLUE)){           //will be TRUE if button was JUST pressed OR released
+    if (ps2x.NewButtonState(PSB_BLUE)) {          //will be TRUE if button was JUST pressed OR released
       Serial.println("X just changed");
     }
 
@@ -358,39 +362,39 @@ void loop() {
     js_right_x = ps2x.Analog(PSS_RX);
     js_right_y = ps2x.Analog(PSS_RY);
     //
-    if(ps2x.Button(PSB_L1)){
+    if (ps2x.Button(PSB_L1)) {
       additional_speed = SLOWER;
       Serial.println("L1");
     }
-    if(ps2x.Button(PSB_R1)){
+    if (ps2x.Button(PSB_R1)) {
       additional_speed = FASTER;
       Serial.println("L1");
     }
-    if(ps2x.Button(PSB_RED)){
+    if (ps2x.Button(PSB_RED)) {
       Serial.println("Circle is pressed");
     }
-    if(ps2x.Button(PSB_PINK)){
+    if (ps2x.Button(PSB_PINK)) {
       Serial.println("Square is pressed");
     }
-    if(ps2x.Button(PSB_BLUE)){
+    if (ps2x.Button(PSB_BLUE)) {
       Serial.println("X is pressed");
       lift_catch_dir = -1;
-      lift_speed = lift_speed_default;
+      lift_speed = lift_speed_default_slow;
     }
-    if(ps2x.Button(PSB_GREEN)){
+    if (ps2x.Button(PSB_GREEN)) {
       Serial.println("Triangle is pressed");
       lift_catch_dir = 1;
-      lift_speed = lift_speed_default;   
+      lift_speed = lift_speed_default;
     }
-    if(ps2x.ButtonPressed(PSB_SELECT)){
-      mode_speed++;  
+    if (ps2x.ButtonPressed(PSB_SELECT)) {
+      mode_speed++;
     }
   }
-  if(mode_speed == 3){
+  if (mode_speed == 3) {
     mode_speed = 1;
   }
   /*=================For streching motor======================*/
-  setLift(lift_catch_dir, lift_speed, R_PWM_lift, L_PWM_lift); // (direction, speed, right_pwm_pin, left_pwm_pin) 
+  setLift(lift_catch_dir, lift_speed, R_PWM_lift, L_PWM_lift); // (direction, speed, right_pwm_pin, left_pwm_pin)
   if (rollDir == 0) {
     catch_state = 0;
     squeeze_lago_speed = 0;
@@ -404,7 +408,7 @@ void loop() {
 
   /*==============Exercute catch logo=========================*/
   setSqueezeMotor(catch_state, squeeze_lago_speed, PWM_SQUEEZE_LAGO, IN1_SQUEEZE_LAGO, IN2_SQUEEZE_LAGO);
-  
+
   /*=================For lift motor lagory======================*/
   if (liftDir == 0) {
     stateDir = 0;
@@ -413,31 +417,31 @@ void loop() {
   } else if (liftDir < 0) {
     stateDir = GO_DOWN;
   }
-//  #define IN1_LIFT_LAGO 50
-//#define IN2_LIFT_LAGO 51
-//#define PWM_LIFT_LAGO 49
-  setLiftLagori(stateDir,PWM_LIFT_LAGO, IN1_LIFT_LAGO, IN2_LIFT_LAGO);
+  //  #define IN1_LIFT_LAGO 50
+  //#define IN2_LIFT_LAGO 51
+  //#define PWM_LIFT_LAGO 49
+  setLiftLagori(stateDir, PWM_LIFT_LAGO, IN1_LIFT_LAGO, IN2_LIFT_LAGO);
 
   //Giving direction codition to motor
   //GIve to Y axis of Left and right JOYStick
-  
-//  if(js_left_y <127)
+
+  //  if(js_left_y <127)
 
   /*=================calculate the speed======================*/
-  if(mode_speed == 1){
+  if (mode_speed == 1) {
     velo = DEFAULT_SPEED + additional_speed;
-  }else if(mode_speed == 2){
+  } else if (mode_speed == 2) {
     velo = SPEED_RUN_LAGO;
   }
-  
+
 
   Serial.print(mode_speed);
   Serial.print(",");
   Serial.println(velo);
 
-  
+
   /*=================For running motor======================*/
-  if(js_left_y == 0)
+  if (js_left_y == 0)
   {
     dir_back_left = GO_FORWARD;
     dir_front_left = GO_FORWARD;
@@ -445,24 +449,24 @@ void loop() {
     speed_front_left = velo;
   }
 
-//  if(js_right_y < 127)
-  if(js_right_y == 0)
+  //  if(js_right_y < 127)
+  if (js_right_y == 0)
   {
     dir_back_right = GO_FORWARD;
     dir_front_right = GO_FORWARD;
     speed_back_right = velo;
     speed_front_right = velo;
   }
-//  if(js_left_y > 127)
-  if(js_left_y == 255)
+  //  if(js_left_y > 127)
+  if (js_left_y == 255)
   {
     dir_back_left = GO_BACKWARD;
     dir_front_left = GO_BACKWARD;
     speed_back_left = velo;
     speed_front_left = velo;
   }
-//  if(js_right_y > 127)
-  if(js_right_y == 255)
+  //  if(js_right_y > 127)
+  if (js_right_y == 255)
   {
     dir_back_right = GO_BACKWARD;
     dir_front_right = GO_BACKWARD;
@@ -470,9 +474,9 @@ void loop() {
     speed_front_right = velo;
   }
   //Give condition to X axis of Left and Right joyStick
-  
- // if(js_left_x <128)
-  if(js_left_x == 0)
+
+  // if(js_left_x <128)
+  if (js_left_x == 0)
   {
     dir_back_left = GO_FORWARD;
     dir_front_left = GO_BACKWARD;
@@ -480,24 +484,24 @@ void loop() {
     speed_front_left = velo;
   }
 
-//  if(js_right_x < 128)
-  if(js_right_x == 0)
+  //  if(js_right_x < 128)
+  if (js_right_x == 0)
   {
     dir_back_right = GO_BACKWARD;
     dir_front_right = GO_FORWARD;
     speed_back_right = velo;
     speed_front_right = velo;
   }
-//  if(js_left_x > 128)
-  if(js_left_x ==255)
+  //  if(js_left_x > 128)
+  if (js_left_x == 255)
   {
     dir_back_left = GO_BACKWARD;
     dir_front_left = GO_FORWARD;
     speed_back_left = velo;
     speed_front_left = velo;
   }
-//  if(js_right_x > 128)
-  if(js_right_x == 255)
+  //  if(js_right_x > 128)
+  if (js_right_x == 255)
   {
     dir_back_right = GO_FORWARD;
     dir_front_right = GO_BACKWARD;
@@ -505,14 +509,14 @@ void loop() {
     speed_front_right = velo;
   }
   /*=================Diagonal direction======================*
-  /*=================Execute run motor======================*/
-    setMotor(dir_front_right, speed_front_right, R_PWM_RIGHT_FRONT, L_PWM_RIGHT_FRONT);
-    setMotor(dir_front_left, speed_front_left, R_PWM_LEFT_FRONT, L_PWM_LEFT_FRONT);
-    setMotor(dir_back_right, speed_back_right, R_PWM_RIGHT_BACK, L_PWM_RIGHT_BACK);
-    setMotor(dir_back_left, speed_back_left, R_PWM_LEFT_BACK, L_PWM_LEFT_BACK);
+    /*=================Execute run motor======================*/
+  setMotor(dir_front_right, speed_front_right, R_PWM_RIGHT_FRONT, L_PWM_RIGHT_FRONT);
+  setMotor(dir_front_left, speed_front_left, R_PWM_LEFT_FRONT, L_PWM_LEFT_FRONT);
+  setMotor(dir_back_right, speed_back_right, R_PWM_RIGHT_BACK, L_PWM_RIGHT_BACK);
+  setMotor(dir_back_left, speed_back_left, R_PWM_LEFT_BACK, L_PWM_LEFT_BACK);
 
 
-    
+
   /*=================Reset everthing part======================*/
 
   //resut the velo and additional speed
@@ -525,7 +529,7 @@ void loop() {
   dir_back_left = 0;
   dir_front_left = 0;
 
-  
+
   //reset speed motor
   speed_back_right = 0;
   speed_front_right = 0;
@@ -542,54 +546,54 @@ void loop() {
   //resetPart
   liftDir = 0;// reset to the orginal state
   stateDir = 0;
-  
+
   rollDir = 0;
- // Serial.println(catch_state);
+  // Serial.println(catch_state);
   catch_state = 0;
   squeeze_lago_speed = 0;
 
   /*==============Reset lift catch direction and speed=================*/
   lift_catch_dir = 0;
-  lift_speed = 0; 
+  lift_speed = 0;
   delay(40);
 }
-void setMotor(int dir, int pwmVal, int R_PWM, int L_PWM){
-  if(dir==1){
+void setMotor(int dir, int pwmVal, int R_PWM, int L_PWM) {
+  if (dir == 1) {
     analogWrite(R_PWM, pwmVal);
     analogWrite(L_PWM, 0);
-  }else if(dir == -1){
+  } else if (dir == -1) {
     analogWrite(R_PWM, 0);
     analogWrite(L_PWM, pwmVal);
-  }else{
+  } else {
     analogWrite(R_PWM, 0);
     analogWrite(L_PWM, 0);
   }
 }
-void setLift(int dir, int pwmVal, int R_PWM, int L_PWM){
-  if(dir==1){
+void setLift(int dir, int pwmVal, int R_PWM, int L_PWM) {
+  if (dir == 1) {
     analogWrite(R_PWM, pwmVal);
     analogWrite(L_PWM, 0);
-  }else if(dir == -1){
+  } else if (dir == -1) {
     analogWrite(R_PWM, 0);
     analogWrite(L_PWM, pwmVal);
-  }else{
+  } else {
     analogWrite(R_PWM, 0);
     analogWrite(L_PWM, 0);
   }
 }
-void setLiftLagori(int dir,int pwm, int in1, int in2){
-  analogWrite(pwm,255);
-  if(dir == 1){
-    digitalWrite(in1,LOW);
-    digitalWrite(in2,HIGH);
+void setLiftLagori(int dir, int pwm, int in1, int in2) {
+  analogWrite(pwm, 255);
+  if (dir == 1) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
   }
-  else if(dir == -1){
-    digitalWrite(in1,HIGH);
-    digitalWrite(in2,LOW);
+  else if (dir == -1) {
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
   }
-  else{
-    digitalWrite(in1,LOW);
-    digitalWrite(in2,LOW);
+  else {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
   }
 }
 //void SQUEEZE_IN(){
@@ -610,18 +614,18 @@ void setLiftLagori(int dir,int pwm, int in1, int in2){
 //    delayMicroseconds(500);
 //  }
 //}
-void setSqueezeMotor(int dir, int pwmVal, int pwm, int in1, int in2){
-  analogWrite(pwm,pwmVal);
-  if(dir == 1){
-    digitalWrite(in1,LOW);
-    digitalWrite(in2,HIGH);
+void setSqueezeMotor(int dir, int pwmVal, int pwm, int in1, int in2) {
+  analogWrite(pwm, pwmVal);
+  if (dir == 1) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
   }
-  else if(dir == -1){
-    digitalWrite(in1,HIGH);
-    digitalWrite(in2,LOW);
+  else if (dir == -1) {
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
   }
-  else{
-    digitalWrite(in1,LOW);
-    digitalWrite(in2,LOW);
+  else {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, LOW);
   }
 }

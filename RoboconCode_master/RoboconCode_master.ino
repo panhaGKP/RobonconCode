@@ -293,7 +293,7 @@ void loop() {
         Serial.println("L2 pressed");
         if (squeeze_state != SQUEEZE_UP) {
           Serial.println("Squeeze ball up");
-          for (int i = 120; i >= 50; i--) {
+          for (int i = 60; i >= 30; i--) {
             controlServoUpDown(i, servonumR1);
             controlServoUpDown(i, servonumM1);
             controlServoUpDown(i, servonumL1);
@@ -306,7 +306,7 @@ void loop() {
           squeeze_state = SQUEEZE_UP;
         } else {
           Serial.println("Squeeze ball down");
-          for (int i = 60; i <= 140; i++) {
+          for (int i = 50; i <= 90; i++) {
             controlServoUpDown(i, servonumR1);
             controlServoUpDown(i, servonumM1);
             controlServoUpDown(i, servonumL1);
@@ -388,6 +388,10 @@ void loop() {
     if (ps2x.ButtonPressed(PSB_SELECT)) {
       mode_speed++;
     }
+    if(ps2x.ButtonPressed(PSB_L3)){
+      //move servo to the first state
+      initialPosition();
+    }
   }
   if (mode_speed == 3) {
     mode_speed = 1;
@@ -451,7 +455,6 @@ void loop() {
   }
   if (js_left_y == 0)
   {
-
     setRunningMotorToward(velo);
   }
   if (js_left_y == 255)
@@ -475,7 +478,7 @@ void loop() {
 //    dir_front_right = GO_FORWARD;
 //    speed_back_right = velo;
 //    speed_front_right = velo;
-  setRunningMotorRotateLeft(velo);
+    setRunningMotorRotateLeft(velo);
   }
   //  if(js_left_x > 128)
   

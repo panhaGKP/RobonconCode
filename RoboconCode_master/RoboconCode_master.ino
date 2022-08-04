@@ -162,7 +162,8 @@ void setup() {
 
   //Code for PS2 error to determind type of controller
   do {
-    delay(1000);
+    delay(100);
+    Serial.println("No connection");
     error = ps2x.config_gamepad(13, 11, 10, 12, true, true);//GamePad(clock, command, attention, data, Pressures?, Rumble?)
   }while(error ==1);
   if (error == 0) {
@@ -453,39 +454,35 @@ void loop() {
   if(js_left_y == 127 || js_right_y == 127){
     setRunningMotorStop();
   }
-  if (js_left_y == 0)
+  if (js_left_x == 0)
   {
-    setRunningMotorToward(velo);
+    setRunningMotorRotateLeft(velo);
   }
-  if (js_left_y == 255)
+  if (js_left_x == 255)
   {
-    setRunningMotorBackward(velo);
+    setRunningMotorRotateRight(velo);
   }
 
   // if(js_left_x <128)
-  if (js_left_x == 0)
+  if (js_right_x == 0)
   {
     setRunningMotorLeftward(velo);
   }
-  if (js_left_x == 255)
+  if (js_right_x == 255)
   {
     setRunningMotorRightward(velo);
   }
   //  if(js_right_x < 128)
-  if (js_right_x == 0)
+  if (js_right_y == 0)
   {
-//    dir_back_right = GO_BACKWARD;
-//    dir_front_right = GO_FORWARD;
-//    speed_back_right = velo;
-//    speed_front_right = velo;
-    setRunningMotorRotateLeft(velo);
+    setRunningMotorToward(velo);;
   }
   //  if(js_left_x > 128)
   
   //  if(js_right_x > 128)
-  if (js_right_x == 255)
+  if (js_right_y == 255)
   {
-    setRunningMotorRotateRight(velo);
+    setRunningMotorBackward(velo);
   }
   /*=================Execute run motor======================*/
 //  setMotor(dir_front_right, speed_front_right, R_PWM_RIGHT_FRONT, L_PWM_RIGHT_FRONT);
